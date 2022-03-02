@@ -13,7 +13,7 @@ import time
 port = '/dev/ttyUSB0'
 baud = 250000
 
-ser = serial.Serial(port, baud)  # open serial port
+ser = serial.Serial(port, baud, timeout = 0)  # open serial port
 
 byte_size = 1
 start_byte = "af"              # start byte defined in ESC protocol as 0xAF
@@ -21,9 +21,10 @@ end_byte =  'ae'
 seconds = 2
 bl = []
 master_list = []
+t = 0.1
 
 start_time = round(time.time())
-x = ser.read(1)
+x = ser.read(5)
 while True: 
     # current_time = time.time()
     # elapsed_time =current_time - start_time
@@ -43,7 +44,7 @@ while True:
             if s == 'ae' or s == 'a8':
                 master_list.append(bl)
                 bl = []
-                time.sleep(0.5) ##
+                time.sleep(t) ##
                 for x in master_list:
                     print(x)
                 break
