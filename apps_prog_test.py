@@ -1,14 +1,17 @@
 
 import serial
 import time 
+import datetime
+import csv 
 
 # import csv
 
 # # open the file in the write mode
-# f = open('/home/mikhail/Desktop/data.csv', 'w')
+ts = str(datetime.datetime.now())
+f = open('/home/mikhail/Desktop/ESC_data_%s.csv' %ts ,'w')
 
 # # create the csv writer
-# writer = csv.writer(f)
+writer = csv.writer(f)
 
 port = '/dev/ttyUSB0'
 baud = 250000
@@ -23,8 +26,8 @@ bl = []
 master_list = []
 t = 0.1
 
-start_time = round(time.time())
-x = ser.read(5)
+# start_time = round(time.time())
+# x = ser.read(5)
 while True: 
     # current_time = time.time()
     # elapsed_time =current_time - start_time
@@ -43,17 +46,20 @@ while True:
             #if s == start_byte:
             if s == 'ae' or s == 'a8':
                 master_list.append(bl)
+                writer.writerow(master_list) # # write a row to the csv file
                 bl = []
-                time.sleep(t) ##
+                time.sleep(t) 
                 for x in master_list:
-                    print(x)
+                    dt = datetime.datetime.now()
+                    print(dt,x)
+                    
+                    
                 break
         else:
             bl.append(s)
 
 for x in master_list:
     print(x)
-# # write a row to the csv file
-# writer.writerow(master_list)
+
 
 ser.close()                     # close port 
