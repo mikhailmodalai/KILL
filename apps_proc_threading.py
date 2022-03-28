@@ -4,41 +4,50 @@ import serial
 import logging
 import time
 import datetime
+import subprocess
 
 port = '/dev/ttyUSB0'
 baud = 250000
 
 ser = serial.Serial(port, baud, timeout = 0)  # open serial port
-seconds = 5
-t = 0.1
-sec = 10
+
+def KILL_function():
+    time.sleep(5)
+    subprocess.call(['sh', './apps_prog_kill_test.sh'])
+
+    if exit == 0:
+        logging.debug('Apps_Proc_Killed_Sucessfully')
+    else:
+        logging.debug('Apps_Proc_Failed_To_Kill')
+
 
 def sniff_function():
     bl = []
     master_list = []
     byte_size = 1
     start_byte = "af"              # start byte defined in ESC protocol as 0xAF    
-    ser = serial.Serial(port, baud, timeout = 0)  # open serial port
+
     while True:
-            s = ser.read(byte_size)
-            s = s.hex()    # stores byte into string list
-            if not s:
-                continue
-            if s == start_byte or not s:
-                bl = []
+        #ser = serial.Serial(port, baud, timeout = 0)  # open serial port
+        s = ser.read(byte_size)
+        s = s.hex()    # stores byte into string list
+        if not s:
+            continue
+        if s == start_byte or not s:
+            bl = []
+            bl.append(s)
+            while True:
+                s = (ser.read(byte_size)).hex()    # stores byte into string list
                 bl.append(s)
-                while True:
-                    s = (ser.read(byte_size)).hex()    # stores byte into string list
-                    bl.append(s)
-                    if s == 'ae' or s == 'a8':
-                        master_list.append(bl)
-                        bl = []
-                        logging.debug(master_list)
-                        for x in master_list:
-                            logging.debug('List: %s',x)
-                            time.sleep(1)
-                            ser.close()
-                        break
+                if s == 'ae' or s == 'a8':
+                    master_list.append(bl)
+                    bl = []
+                    logging.debug(master_list)
+                    for x in master_list:
+                        logging.debug('List: %s',x)
+                        time.sleep(1)
+                        ser.close()
+                    break
 
 
 if __name__ == "__main__":
@@ -48,6 +57,8 @@ if __name__ == "__main__":
     sniff = threading.Thread(target=sniff_function)
     logging.info("Main    : before running thread")
     sniff.start()
+    KILL = threading.Thread(target=KILL_function)
+    KILL.start()
     logging.info("Main    : wait for the thread to finish")
     # sniff.join()
     logging.info("Main    : all done")
