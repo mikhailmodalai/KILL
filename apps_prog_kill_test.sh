@@ -21,3 +21,7 @@ adb shell "echo 0 >/sys/devices/system/cpu/cpu6/online"
 adb shell "echo 0 >/sys/devices/system/cpu/cpu7/online"
 
 adb shell "echo c >/proc/sysrq-trigger"
+
+#exit 0
+
+

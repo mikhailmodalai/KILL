@@ -1,5 +1,7 @@
 
+from distutils.log import debug
 import threading
+from defer import return_value
 import serial
 import logging
 import time
@@ -8,14 +10,14 @@ import subprocess
 
 port = '/dev/ttyUSB0'
 baud = 250000
-
-ser = serial.Serial(port, baud, timeout = 0)  # open serial port
+ser = None
 
 def KILL_function():
-    time.sleep(5)
-    subprocess.call(['sh', './apps_prog_kill_test.sh'])
+    result = subprocess.call(['sh', './apps_prog_kill_test.sh'])
+    #time.sleep(1)
+    #subprocess.call(['sh', './apps_prog_kill_test.sh'])
 
-    if exit == 0:
+    if result == 0:
         logging.debug('Apps_Proc_Killed_Sucessfully')
     else:
         logging.debug('Apps_Proc_Failed_To_Kill')
@@ -26,9 +28,23 @@ def sniff_function():
     master_list = []
     byte_size = 1
     start_byte = "af"              # start byte defined in ESC protocol as 0xAF    
+    ser = serial.Serial(port, baud, timeout = 1)  # open serial port
+    
+    timeout = 0.3 # minutes to run
+    seconds = timeout * 60
+
+    if ser.is_open is False:
+        exit(1)
+    time.sleep(1)
+
+    start_time = round(time.time())
 
     while True:
-        #ser = serial.Serial(port, baud, timeout = 0)  # open serial port
+        current_time = time.time()
+        elapsed_time =current_time - start_time
+        if elapsed_time > seconds:  # time out loop
+            break
+
         s = ser.read(byte_size)
         s = s.hex()    # stores byte into string list
         if not s:
@@ -42,21 +58,26 @@ def sniff_function():
                 if s == 'ae' or s == 'a8':
                     master_list.append(bl)
                     bl = []
-                    logging.debug(master_list)
+                    #logging.debug(master_list)
                     for x in master_list:
                         logging.debug('List: %s',x)
                         time.sleep(1)
-                        ser.close()
+                        
                     break
+
+                #with open('test.txt', 'ab') as f:
+                 #   f.write(b'hi\n')
 
 
 if __name__ == "__main__":
-    logging.basicConfig(filename='ESC_log.log',format='%(asctime)s %(message)s',filemode='w')
+    logging.basicConfig(filename='ESC_log.log',filemode='w',level=logging.DEBUG)
     logging.debug('start')
-    ser = serial.Serial(port, baud, timeout = 0)  # open serial port
+   
+    
     sniff = threading.Thread(target=sniff_function)
     logging.info("Main    : before running thread")
     sniff.start()
+    time.sleep(2)
     KILL = threading.Thread(target=KILL_function)
     KILL.start()
     logging.info("Main    : wait for the thread to finish")
