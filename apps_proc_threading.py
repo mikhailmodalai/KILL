@@ -13,17 +13,13 @@ baud = 250000
 ser = None
 
 def KILL_function():
-
     while True:
-        subprocess.call(['sh', './apps_prog_kill_test.sh'])
-        result = subprocess.check_output(['adb devices'], shell=True)
-        result = str(result, "utf-8" )
-        if "offline" in result:
+        subprocess.call(['sh', './apps_prog_kill_test.sh'])             # calls the bash script
+        result = subprocess.check_output(['adb devices'], shell=True)   # stores the output of 'adb devices' into var
+        result = str(result, "utf-8" )                                  # converts byte to sting
+        if "offline" in result:                                         # checks to see if device is offline validating that apps_proc kill was sucessful
             logging.info('Apps_Proc_Killed_Sucessfully')
             break
-            
-#       else:
-#            logging.debug('Apps_Proc_Failed_To_Kill !!TRYING AGAIN!!')
 
 def sniff_function():
     bl = []
@@ -31,8 +27,10 @@ def sniff_function():
     byte_size = 1
     start_byte = "af"                               # start byte defined in ESC protocol as 0xAF    
     ser = serial.Serial(port, baud, timeout = 1)    # open serial port
-    
-    timeout = 0.3                                   # minutes to run
+
+    #############
+    timeout = 5                                   # minutes to run
+    #############
     seconds = timeout * 60
 
     if ser.is_open is False:
@@ -40,7 +38,6 @@ def sniff_function():
     time.sleep(1)
 
     start_time = round(time.time())
-
     while True:
         current_time = time.time()
         elapsed_time =current_time - start_time
@@ -54,15 +51,14 @@ def sniff_function():
         if s == start_byte or not s:
             bl = []
             bl.append(s)
-            while True:
+            while True:                             # loop populates array with bytes until an end byte is read
                 s = (ser.read(byte_size)).hex()     # stores byte into string list
                 bl.append(s)
                 if s == 'ae' or s == 'a8':
                     master_list.append(bl)
                     bl = []
-                    
                     for x in master_list:
-                        logging.debug('List: %s',x)
+                        logging.debug(x) #outputs the array into log
                         time.sleep(1)
                         
                     break
@@ -83,7 +79,9 @@ if __name__ == "__main__":
     logging.info("start sniffing data...")
     sniff.start()
     time.sleep(5)
+    
     KILL = threading.Thread(target=KILL_function)
-    KILL.start()
     logging.info("Apps_Proc_Kill_Start")
+    KILL.start()
+
 
